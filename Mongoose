@@ -1,0 +1,103 @@
+// Import necessary modules and connect to the database
+const mongoose = require('mongoose');
+require('dotenv').config(); // Load environment variables
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+
+// Create a Person schema
+const personSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  age: Number,
+  favoriteFoods: [String],
+});
+
+// Create a Person model
+const Person = mongoose.model('Person', personSchema);
+
+// 1. Create and Save a Record of a Model
+const newPerson = new Person({
+  name: 'John Doe',
+  age: 30,
+  favoriteFoods: ['Pizza', 'Burger'],
+});
+
+newPerson.save(function(err, data) {
+  if (err) return console.error(err);
+  console.log('New person saved:', data);
+});
+
+// 2. Create Many Records with model.create()
+const arrayOfPeople = [
+  { name: 'Alice', age: 25, favoriteFoods: ['Pasta', 'Salad'] },
+  { name: 'Bob', age: 28, favoriteFoods: ['Sushi', 'Tacos'] },
+];
+
+Person.create(arrayOfPeople, function(err, data) {
+  if (err) return console.error(err);
+  console.log('Multiple people created:', data);
+});
+
+// 3. Use model.find() to Search Your Database
+Person.find({ name: 'Alice' }, function(err, data) {
+  if (err) return console.error(err);
+  console.log('People with name "Alice":', data);
+});
+
+// 4. Use model.findOne() to Return a Single Matching Document
+Person.findOne({ favoriteFoods: 'Pizza' }, function(err, data) {
+  if (err) return console.error(err);
+  console.log('Person who likes Pizza:', data);
+});
+
+// 5. Use model.findById() to Search Your Database By _id
+const personId = 'your-person-id-here';
+Person.findById(personId, function(err, data) {
+  if (err) return console.error(err);
+  console.log('Person with ID:', data);
+});
+
+// 6. Perform Classic Updates by Running Find, Edit, then Save
+const personIdToUpdate = 'your-person-id-here';
+Person.findById(personIdToUpdate, function(err, person) {
+  if (err) return console.error(err);
+  
+  person.favoriteFoods.push('Hamburger');
+  person.save(function(err, updatedPerson) {
+    if (err) return console.error(err);
+    console.log('Updated person:', updatedPerson);
+  });
+});
+
+// 7. Perform New Updates on a Document Using model.findOneAndUpdate()
+const personNameToUpdate = 'Alice';
+Person.findOneAndUpdate(
+  { name: personNameToUpdate },
+  { age: 20 },
+  { new: true },
+  function(err, updatedPerson) {
+    if (err) return console.error(err);
+    console.log('Updated person by name:', updatedPerson);
+  }
+);
+
+// 8. Delete One Document Using model.findByIdAndRemove
+const personIdToDelete = 'your-person-id-here';
+Person.findByIdAndRemove(personIdToDelete, function(err, removedPerson) {
+  if (err) return console.error(err);
+  console.log('Deleted person:', removedPerson);
+});
+
+// 9. Delete Many Documents with model.remove()
+Person.remove({ name: 'Mary' }, function(err, result) {
+  if (err) return console.error(err);
+  console.log('Number of documents deleted:', result.deletedCount);
+});
+
+// 10. Chain Search Query Helpers to Narrow Search Results
+Person.find({ favoriteFoods: 'burritos' })
+  .sort('name')
+  .limit(2)
+  .select('-age')
+  .exec(function(err, data) {
+    if (err) return console.error(err);
+    console.log('Filtered and sorted results:', data);
+  });
